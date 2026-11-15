@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowRight, Search, Sparkles } from 'lucide-react'
 import Navbar from './components/Navbar'
+import ProductCatalog from './components/ProductCatalog'
 
 function App() {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -63,25 +64,7 @@ function App() {
           </div>
         </section>
 
-        <section
-          id="productos"
-          className="border-t border-zinc-200 bg-zinc-50 px-5 py-20 dark:border-zinc-800 dark:bg-zinc-900/50"
-        >
-          <div className="mx-auto max-w-7xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">
-              Nuestro portafolio
-            </p>
-
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Trabajos recientes
-            </h2>
-
-            <p className="mt-4 text-zinc-600 dark:text-zinc-400">
-              Próximamente mostraremos aquí los proyectos publicados
-              desde nuestro panel de administración.
-            </p>
-          </div>
-        </section>
+        <ProductCatalog />
 
         <section id="categorias" className="mx-auto max-w-7xl px-5 py-20">
           <h2 className="text-3xl font-bold">Explora por categorías</h2>

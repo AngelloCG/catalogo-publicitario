@@ -49,7 +49,14 @@ export default function Navbar({
           <button
             type="button"
             aria-label="Buscar productos"
-            onClick={() => document.getElementById('buscador')?.focus()}
+            onClick={() => {
+            document.getElementById('productos')?.scrollIntoView({
+                behavior: 'smooth',
+            })
+            document.getElementById('buscador-catalogo')?.focus({
+                preventScroll: true,
+            })
+            }}
             className="hidden rounded-xl p-2.5 text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:block"
           >
             <Search size={20} />
