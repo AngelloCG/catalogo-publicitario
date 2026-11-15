@@ -3,8 +3,23 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, Search, Sparkles } from 'lucide-react'
 import Navbar from './components/Navbar'
 import ProductCatalog from './components/ProductCatalog'
+import {
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+} from 'react-router-dom'
+import ProductDetail from './pages/ProductDetail'
+
+// Reinicia la galería cuando cambia el producto
+function ProductDetailRoute() {
+  const { slug } = useParams<{ slug: string }>()
+
+  return <ProductDetail key={slug} />
+}
 
 function App() {
+  // Estado del tema claro y oscuro
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const savedTheme = localStorage.getItem('theme')
 
@@ -15,10 +30,29 @@ function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   })
 
+  // Obtener la ruta actual
+  const location = useLocation()
+
+  // Guardar y aplicar el tema seleccionado
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode)
     localStorage.setItem('theme', darkMode ? 'dark' : 'light')
   }, [darkMode])
+
+  // Navegar hacia las secciones mediante sus enlaces
+  useEffect(() => {
+    if (!location.hash) return
+
+    const targetId = location.hash.slice(1)
+
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: 'smooth',
+      })
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [location.pathname, location.hash])
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-white">
@@ -26,9 +60,17 @@ function App() {
         darkMode={darkMode}
         toggleTheme={() => setDarkMode(!darkMode)}
       />
-
-      <main id="inicio">
-        <section className="mx-auto max-w-7xl px-5 py-20 text-center lg:px-8 lg:py-32">
+      
+      <Routes>
+      <Route
+         path="/productos/:slug"
+        element={<ProductDetailRoute />} />
+        <Route
+          path="/"
+          element={
+        <main id="inicio">
+        
+         <section className="mx-auto max-w-7xl px-5 py-20 text-center lg:px-8 lg:py-32">
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300">
             <Sparkles size={16} />
             Creatividad que se hace realidad
@@ -62,25 +104,37 @@ function App() {
               Explorar <ArrowRight size={16} />
             </a>
           </div>
-        </section>
+          </section>
 
-        <ProductCatalog />
+          <ProductCatalog />
 
-        <section id="categorias" className="mx-auto max-w-7xl px-5 py-20">
+          <section id="categorias" className="mx-auto max-w-7xl px-5 py-20">
           <h2 className="text-3xl font-bold">Explora por categorías</h2>
           <p className="mt-4 text-zinc-600 dark:text-zinc-400">
             Aquí organizaremos todos nuestros productos y servicios.
           </p>
-        </section>
+         </section>
 
-        <footer
+         <footer
           id="contacto"
           className="border-t border-zinc-200 px-5 py-10 text-center text-sm text-zinc-500 dark:border-zinc-800"
-        >
+         >
           Catálogo Publicitario · Desarrollado con React y TypeScript
-        </footer>
-      </main>
-    </div>
+         </footer>
+        </main>
+        }
+      />
+  <Route path="*" element={
+    <main className="mx-auto max-w-7xl px-5 py-24 text-center">
+      <h1 className="text-3xl font-bold">Página no encontrada</h1>
+      <a href="/" className="mt-5 inline-block text-blue-600">
+        Volver al inicio
+      </a>
+    </main>
+  } />
+</Routes>
+</div>
+    
   )
 }
 

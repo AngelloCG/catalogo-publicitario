@@ -2,17 +2,26 @@
 import type { Product } from '../types/product'
 
 export const products: Product[] = [
-  {
-    id: '1',
-    name: 'Aviso luminoso LED',
-    category: 'Avisos publicitarios',
-    description: 'Aviso con letras volumétricas e iluminación LED.',
-    image: 'https://placehold.co/900x700/1d4ed8/ffffff?text=Aviso+Luminoso',
-    featured: true,
-    createdAt: '2026-11-14',
-  },
+
+{
+  id: '1',
+  slug: 'aviso-luminoso-led',
+  name: 'Aviso luminoso LED',
+  category: 'Avisos publicitarios',
+  description: 'Aviso con letras volumétricas e iluminación LED.',
+  image: 'https://placehold.co/900x700/1d4ed8/ffffff?text=Aviso+Luminoso',
+  images: [
+    'https://placehold.co/900x700/1d4ed8/ffffff?text=Vista+Frontal',
+    'https://placehold.co/900x700/334155/ffffff?text=Vista+Lateral',
+    'https://placehold.co/900x700/475569/ffffff?text=Detalles',
+  ],
+  featured: true,
+  createdAt: '2026-11-14',
+},
+
   {
     id: '2',
+    slug: 'pendon-publicitario',
     name: 'Pendón publicitario',
     category: 'Impresión digital',
     description: 'Pendón personalizado de alta calidad para eventos.',
@@ -22,6 +31,7 @@ export const products: Product[] = [
   },
   {
     id: '3',
+    slug: '	trofeo-en-acrilico',
     name: 'Trofeo en acrílico',
     category: 'Recordatorios',
     description: 'Trofeo personalizado elaborado en acrílico.',
@@ -31,6 +41,7 @@ export const products: Product[] = [
   },
   {
     id: '4',
+    slug: 'sello-automatico',
     name: 'Sello automático',
     category: 'Sellos',
     description: 'Sello personalizado para empresas y oficinas.',
@@ -40,6 +51,7 @@ export const products: Product[] = [
   },
   {
     id: '5',
+    slug: 'letras-volumetricas',
     name: 'Letras volumétricas',
     category: 'Avisos publicitarios',
     description: 'Letras tridimensionales para fachadas comerciales.',
@@ -49,6 +61,7 @@ export const products: Product[] = [
   },
   {
     id: '6',
+    slug: '	banner-personalizado',
     name: 'Banner personalizado',
     category: 'Impresión digital',
     description: 'Impresión de banner para publicidad y eventos.',

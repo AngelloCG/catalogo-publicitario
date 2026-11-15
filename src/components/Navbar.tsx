@@ -13,13 +13,12 @@ export default function Navbar({
 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const links = [
-    { label: 'Inicio', href: '#inicio' },
-    { label: 'Productos', href: '#productos' },
-    { label: 'Categorías', href: '#categorias' },
-    { label: 'Contacto', href: '#contacto' },
-  ]
-
+const links = [
+  { label: 'Inicio', href: '/' },
+  { label: 'Productos', href: '/#productos' },
+  { label: 'Categorías', href: '/#categorias' },
+  { label: 'Contacto', href: '/#contacto' },
+]
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/90">
       <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8">

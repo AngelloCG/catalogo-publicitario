@@ -1,6 +1,7 @@
 
 import { ArrowUpRight } from 'lucide-react'
 import type { Product } from '../types/product'
+import { Link } from 'react-router-dom'
 
 type ProductCardProps = {
   product: Product
@@ -8,7 +9,9 @@ type ProductCardProps = {
 
 export default function ProductCard({ product }: ProductCardProps) {
   return (
-    <article className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+    <Link
+        to={`/productos/${product.slug}`}
+        className="group block overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
       <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
         <img
           src={product.image}
@@ -43,6 +46,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.description}
         </p>
       </div>
-    </article>
+    </Link>
   )
 }
