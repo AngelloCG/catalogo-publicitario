@@ -10,6 +10,8 @@ import {
   useParams,
 } from 'react-router-dom'
 import ProductDetail from './pages/ProductDetail'
+import AdminLayout from './admin/AdminLayout'
+import Dashboard from './admin/Dashboard'
 
 // Reinicia la galería cuando cambia el producto
 function ProductDetailRoute() {
@@ -17,6 +19,29 @@ function ProductDetailRoute() {
 
   return <ProductDetail key={slug} />
 }
+
+function AdminPlaceholder({ title }: { title: string }) {
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-3xl font-bold">{title}</h1>
+        <p className="mt-2 text-zinc-500 dark:text-zinc-400">
+          Esta sección estará disponible en una próxima etapa.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
+        <p className="text-lg font-semibold">
+          Estamos construyendo este módulo
+        </p>
+        <p className="mt-2 text-sm text-zinc-500">
+          Aquí podrás administrar {title.toLowerCase()} sin escribir código.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 
 function App() {
   // Estado del tema claro y oscuro
@@ -32,6 +57,9 @@ function App() {
 
   // Obtener la ruta actual
   const location = useLocation()
+  const isAdminRoute =
+  location.pathname === '/admin' ||
+  location.pathname.startsWith('/admin/')
 
   // Guardar y aplicar el tema seleccionado
   useEffect(() => {
@@ -54,14 +82,49 @@ function App() {
     return () => cancelAnimationFrame(frame)
   }, [location.pathname, location.hash])
 
-  return (
+  return (  
     <div className="min-h-screen bg-white text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-white">
+    {!isAdminRoute && (
       <Navbar
         darkMode={darkMode}
         toggleTheme={() => setDarkMode(!darkMode)}
       />
+    )}
       
       <Routes>
+
+<Route
+  path="/admin"
+  element={
+    <AdminLayout
+      darkMode={darkMode}
+      toggleTheme={() => setDarkMode(!darkMode)}
+    />
+  }
+>
+  <Route index element={<Dashboard />} />
+
+  <Route
+    path="productos"
+    element={<AdminPlaceholder title="Productos" />}
+  />
+
+  <Route
+    path="categorias"
+    element={<AdminPlaceholder title="Categorías" />}
+  />
+
+  <Route
+    path="apariencia"
+    element={<AdminPlaceholder title="Apariencia" />}
+  />
+
+  <Route
+    path="configuracion"
+    element={<AdminPlaceholder title="Configuración" />}
+  />
+</Route>
+
       <Route
          path="/productos/:slug"
         element={<ProductDetailRoute />} />
