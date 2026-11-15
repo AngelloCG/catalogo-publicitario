@@ -12,13 +12,18 @@ import {
 import ProductDetail from './pages/ProductDetail'
 import AdminLayout from './admin/AdminLayout'
 import Dashboard from './admin/Dashboard'
+import ProductManager from './admin/ProductManager'
+import { products as initialProducts } from './data/products'
+import type { Product } from './types/product'
 
 // Reinicia la galería cuando cambia el producto
-function ProductDetailRoute() {
+
+function ProductDetailRoute({ products }: { products: Product[] }) {
   const { slug } = useParams<{ slug: string }>()
 
-  return <ProductDetail key={slug} />
+  return <ProductDetail key={slug} products={products} />
 }
+
 
 function AdminPlaceholder({ title }: { title: string }) {
   return (
@@ -44,6 +49,7 @@ function AdminPlaceholder({ title }: { title: string }) {
 
 
 function App() {
+
   // Estado del tema claro y oscuro
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const savedTheme = localStorage.getItem('theme')
@@ -81,6 +87,57 @@ function App() {
 
     return () => cancelAnimationFrame(frame)
   }, [location.pathname, location.hash])
+  
+
+const [products, setProducts] = useState<Product[]>(() => {
+  try {
+    const saved = localStorage.getItem('catalog-products-v1')
+
+    if (saved !== null) {
+      const parsed: unknown = JSON.parse(saved)
+
+      if (Array.isArray(parsed)) {
+        return parsed as Product[]
+      }
+    }
+  } catch (error) {
+    console.error('No se pudieron cargar los productos:', error)
+  }
+
+  return initialProducts
+})
+
+useEffect(() => {
+  try {
+    localStorage.setItem(
+      'catalog-products-v1',
+      JSON.stringify(products)
+    )
+  } catch (error) {
+    console.error('No se pudieron guardar los productos:', error)
+  }
+}, [products])
+
+function handleSaveProduct(product: Product) {
+  setProducts((current) => {
+    const exists = current.some((item) => item.id === product.id)
+
+    if (exists) {
+      return current.map((item) =>
+        item.id === product.id ? product : item
+      )
+    }
+
+    return [product, ...current]
+  })
+}
+
+function handleDeleteProduct(id: string) {
+  setProducts((current) =>
+    current.filter((product) => product.id !== id)
+  )
+}
+
 
   return (  
     <div className="min-h-screen bg-white text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-white">
@@ -102,12 +159,20 @@ function App() {
     />
   }
 >
-  <Route index element={<Dashboard />} />
+  <Route index element={<Dashboard products={products} />} />
 
-  <Route
-    path="productos"
-    element={<AdminPlaceholder title="Productos" />}
-  />
+
+<Route
+  path="productos"
+  element={
+    <ProductManager
+      products={products}
+      onSave={handleSaveProduct}
+      onDelete={handleDeleteProduct}
+    />
+  }
+/>
+
 
   <Route
     path="categorias"
@@ -126,8 +191,9 @@ function App() {
 </Route>
 
       <Route
-         path="/productos/:slug"
-        element={<ProductDetailRoute />} />
+  path="/productos/:slug"
+  element={<ProductDetailRoute products={products} />}
+/>
         <Route
           path="/"
           element={
@@ -169,7 +235,7 @@ function App() {
           </div>
           </section>
 
-          <ProductCatalog />
+          <ProductCatalog products={products} />
 
           <section id="categorias" className="mx-auto max-w-7xl px-5 py-20">
           <h2 className="text-3xl font-bold">Explora por categorías</h2>

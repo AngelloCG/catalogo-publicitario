@@ -1,7 +1,7 @@
 
 import { useMemo, useState } from 'react'
 import { Search, SlidersHorizontal } from 'lucide-react'
-import { products } from '../data/products'
+import type { Product } from '../types/product'
 import ProductCard from './ProductCard'
 
 function normalizeText(value: string) {
@@ -11,14 +11,21 @@ function normalizeText(value: string) {
     .toLowerCase()
 }
 
-export default function ProductCatalog() {
+
+type ProductCatalogProps = {
+  products: Product[]
+}
+
+export default function ProductCatalog({
+  products,
+}: ProductCatalogProps) {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('Todas')
 
-  const categories = useMemo(
-    () => ['Todas', ...new Set(products.map((p) => p.category))],
-    []
-  )
+const categories = useMemo(
+  () => ['Todas', ...new Set(products.map((p) => p.category))],
+  [products]
+)
 
   const filteredProducts = useMemo(() => {
     const term = normalizeText(search.trim())
@@ -39,7 +46,7 @@ export default function ProductCatalog() {
           new Date(b.createdAt).getTime() -
           new Date(a.createdAt).getTime()
       )
-  }, [search, category])
+}, [search, category, products])
 
   return (
     <section id="productos" className="bg-zinc-50 py-20 dark:bg-zinc-900/50">

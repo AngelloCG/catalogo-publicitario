@@ -8,9 +8,17 @@ import {
   ArrowUpRight,
   Plus,
 } from 'lucide-react'
-import { products } from '../data/products'
+import type { Product } from '../types/product'
 
-export default function Dashboard() {
+
+type DashboardProps = {
+  products: Product[]
+}
+
+export default function Dashboard({
+  products,
+}: DashboardProps) {
+
   const totalProducts = products.length
 
   const totalCategories = new Set(

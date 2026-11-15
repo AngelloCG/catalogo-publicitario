@@ -9,9 +9,17 @@ import {
   MessageCircle,
 } from 'lucide-react'
 
-import { products } from '../data/products'
+import type { Product } from '../types/product'
 
-export default function ProductDetail() {
+
+type ProductDetailProps = {
+  products: Product[]
+}
+
+export default function ProductDetail({
+  products,
+}: ProductDetailProps) {
+
   const { slug } = useParams<{ slug: string }>()
 
   const product = products.find((item) => item.slug === slug)
