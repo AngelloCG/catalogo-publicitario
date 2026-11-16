@@ -15,6 +15,8 @@ import Dashboard from './admin/Dashboard'
 import ProductManager from './admin/ProductManager'
 import { products as initialProducts } from './data/products'
 import type { Product } from './types/product'
+import AdminLogin from './admin/AdminLogin'
+import AdminGuard from './admin/AdminGuard'
 
 // Reinicia la galería cuando cambia el producto
 
@@ -150,45 +152,54 @@ function handleDeleteProduct(id: string) {
       
       <Routes>
 
-<Route
-  path="/admin"
-  element={
-    <AdminLayout
-      darkMode={darkMode}
-      toggleTheme={() => setDarkMode(!darkMode)}
-    />
-  }
->
-  <Route index element={<Dashboard products={products} />} />
 
-
+{/* Inicio de sesión público del administrador */}
 <Route
-  path="productos"
-  element={
-    <ProductManager
-      products={products}
-      onSave={handleSaveProduct}
-      onDelete={handleDeleteProduct}
-    />
-  }
+  path="/admin/login"
+  element={<AdminLogin />}
 />
 
-
+{/* Rutas administrativas protegidas */}
+<Route element={<AdminGuard />}>
   <Route
-    path="categorias"
-    element={<AdminPlaceholder title="Categorías" />}
-  />
+    path="/admin"
+    element={
+      <AdminLayout
+        darkMode={darkMode}
+        toggleTheme={() => setDarkMode(!darkMode)}
+      />
+    }
+  >
+    <Route index element={<Dashboard products={products} />} />
 
-  <Route
-    path="apariencia"
-    element={<AdminPlaceholder title="Apariencia" />}
-  />
+    <Route
+      path="productos"
+      element={
+        <ProductManager
+          products={products}
+          onSave={handleSaveProduct}
+          onDelete={handleDeleteProduct}
+        />
+      }
+    />
 
-  <Route
-    path="configuracion"
-    element={<AdminPlaceholder title="Configuración" />}
-  />
+    <Route
+      path="categorias"
+      element={<AdminPlaceholder title="Categorías" />}
+    />
+
+    <Route
+      path="apariencia"
+      element={<AdminPlaceholder title="Apariencia" />}
+    />
+
+    <Route
+      path="configuracion"
+      element={<AdminPlaceholder title="Configuración" />}
+    />
+  </Route>
 </Route>
+
 
       <Route
   path="/productos/:slug"

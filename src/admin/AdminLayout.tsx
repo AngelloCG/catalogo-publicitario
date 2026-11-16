@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -13,7 +13,9 @@ import {
   Moon,
   Sun,
   ArrowLeft,
+  LogOut,
 } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 type AdminLayoutProps = {
   darkMode: boolean
@@ -34,6 +36,27 @@ export default function AdminLayout({
 }: AdminLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+
+const navigate = useNavigate()
+const [signingOut, setSigningOut] = useState(false)
+
+async function handleLogout() {
+  setSigningOut(true)
+
+  const { error } = await supabase.auth.signOut({
+    scope: 'local',
+  })
+
+  setSigningOut(false)
+
+  if (error) {
+    window.alert('No se pudo cerrar la sesión. Inténtalo de nuevo.')
+    return
+  }
+
+  navigate('/admin/login', { replace: true })
+}
+
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
@@ -124,6 +147,22 @@ export default function AdminLayout({
             <ArrowLeft size={20} />
             {(!collapsed || mobileOpen) && 'Ver catálogo'}
           </NavLink>
+
+<button
+  type="button"
+  onClick={handleLogout}
+  disabled={signingOut}
+  title="Cerrar sesión"
+  className="mt-1 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
+>
+  <LogOut size={20} className="shrink-0" />
+  {(!collapsed || mobileOpen) && (
+    <span>
+      {signingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+    </span>
+  )}
+</button>
+
         </div>
       </aside>
 
