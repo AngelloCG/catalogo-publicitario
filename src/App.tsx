@@ -12,12 +12,12 @@ import {
 import ProductDetail from './pages/ProductDetail'
 import AdminLayout from './admin/AdminLayout'
 import Dashboard from './admin/Dashboard'
-import ProductManager from './admin/ProductManager'
 import { products as initialProducts } from './data/products'
 import type { Product } from './types/product'
 import AdminLogin from './admin/AdminLogin'
 import AdminGuard from './admin/AdminGuard'
-
+import SupabaseConnectionTest from './components/SupabaseConnectionTest'
+import AdminProductsPage from './admin/AdminProductsPage'
 // Reinicia la galería cuando cambia el producto
 
 function ProductDetailRoute({ products }: { products: Product[] }) {
@@ -91,7 +91,9 @@ function App() {
   }, [location.pathname, location.hash])
   
 
-const [products, setProducts] = useState<Product[]>(() => {
+
+const [products] = useState<Product[]>(() => {
+
   try {
     const saved = localStorage.getItem('catalog-products-v1')
 
@@ -120,25 +122,6 @@ useEffect(() => {
   }
 }, [products])
 
-function handleSaveProduct(product: Product) {
-  setProducts((current) => {
-    const exists = current.some((item) => item.id === product.id)
-
-    if (exists) {
-      return current.map((item) =>
-        item.id === product.id ? product : item
-      )
-    }
-
-    return [product, ...current]
-  })
-}
-
-function handleDeleteProduct(id: string) {
-  setProducts((current) =>
-    current.filter((product) => product.id !== id)
-  )
-}
 
 
   return (  
@@ -170,18 +153,13 @@ function handleDeleteProduct(id: string) {
       />
     }
   >
-    <Route index element={<Dashboard products={products} />} />
+  <Route index element={<Dashboard products={products} />} />
 
-    <Route
-      path="productos"
-      element={
-        <ProductManager
-          products={products}
-          onSave={handleSaveProduct}
-          onDelete={handleDeleteProduct}
-        />
-      }
-    />
+  <Route
+  path="productos"
+  element={<AdminProductsPage />}
+  />
+
 
     <Route
       path="categorias"
@@ -247,6 +225,7 @@ function handleDeleteProduct(id: string) {
           </section>
 
           <ProductCatalog products={products} />
+          <SupabaseConnectionTest />
 
           <section id="categorias" className="mx-auto max-w-7xl px-5 py-20">
           <h2 className="text-3xl font-bold">Explora por categorías</h2>
