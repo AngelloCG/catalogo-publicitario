@@ -9,4 +9,5 @@ export type Product = {
   images?: string[]
   featured: boolean
   createdAt: string
+  published?: boolean
 }
