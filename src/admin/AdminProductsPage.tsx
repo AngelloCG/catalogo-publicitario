@@ -18,9 +18,10 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    setError('')
+
+const loadData = useCallback(async () => {
+  setError('')
+
 
     try {
       const [productData, categoryData] = await Promise.all([
@@ -108,7 +109,9 @@ useEffect(() => {
     await loadData()
   }
 
-  if (loading && products.length === 0) {
+if (loading && products.length === 0 && categories.length === 0) {
+
+
     return (
       <div className="flex min-h-64 items-center justify-center gap-3 text-zinc-500">
         <LoaderCircle className="animate-spin" size={24} />
@@ -141,11 +144,14 @@ useEffect(() => {
     )
   }
 
-  return (
-    <ProductManager
-      products={products}
-      onSave={handleSave}
-      onDelete={handleDelete}
-    />
-  )
+
+return (
+  <ProductManager
+    products={products}
+    categories={categories.map((category) => category.name)}
+    onSave={handleSave}
+    onDelete={handleDelete}
+  />
+)
+
 }

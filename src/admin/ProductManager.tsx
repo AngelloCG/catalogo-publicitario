@@ -14,11 +14,14 @@ import {
 } from 'lucide-react'
 import type { Product } from '../types/product'
 
+
 type ProductManagerProps = {
   products: Product[]
-  onSave: (product: Product) => void
-  onDelete: (id: string) => void
+  categories: string[]
+  onSave: (product: Product) => Promise<void>
+  onDelete: (id: string) => Promise<void>
 }
+
 
 type ProductForm = {
   name: string
@@ -26,7 +29,9 @@ type ProductForm = {
   description: string
   image: string
   featured: boolean
+  published: boolean
 }
+
 
 const emptyForm: ProductForm = {
   name: '',
@@ -34,7 +39,9 @@ const emptyForm: ProductForm = {
   description: '',
   image: '',
   featured: false,
+  published: true,
 }
+
 
 function makeSlug(name: string, id: string) {
   const base = name
@@ -47,17 +54,23 @@ function makeSlug(name: string, id: string) {
   return `${base || 'producto'}-${id.slice(0, 8)}`
 }
 
+
 export default function ProductManager({
   products,
+  categories,
   onSave,
   onDelete,
 }: ProductManagerProps) {
+
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [form, setForm] = useState<ProductForm>(emptyForm)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
 
 // Ocultar la notificación automáticamente
 useEffect(() => {
@@ -78,9 +91,9 @@ useEffect(() => {
   document.body.style.overflow = 'hidden'
 
   function handleEscape(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      setFormOpen(false)
-    }
+if (event.key === 'Escape' && !saving) {
+  setFormOpen(false)
+}
   }
 
   window.addEventListener('keydown', handleEscape)
@@ -89,7 +102,7 @@ useEffect(() => {
     document.body.style.overflow = previousOverflow
     window.removeEventListener('keydown', handleEscape)
   }
-}, [formOpen])
+}, [formOpen, saving])
 
 
   const filteredProducts = products.filter((product) =>
@@ -98,7 +111,6 @@ useEffect(() => {
       .includes(search.toLowerCase())
   )
 
-  const categories = [...new Set(products.map((p) => p.category))]
 
   function openCreate() {
     setEditingProduct(null)
@@ -116,84 +128,129 @@ useEffect(() => {
       description: product.description,
       image: product.image,
       featured: product.featured,
+      published: product.published ?? true,
     })
     setError('')
     setMessage('')
     setFormOpen(true)
   }
 
+
   function closeForm() {
+    if (saving) return
+
     setFormOpen(false)
     setEditingProduct(null)
     setError('')
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+
+
+async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault()
+
+  if (saving || deletingId !== null) return
+
+  setError('')
+
+  const name = form.name.trim()
+  const category = form.category.trim()
+  const description = form.description.trim()
+  const image = form.image.trim()
+
+  if (!name || !category || !description || !image) {
+    setError('Completa todos los campos obligatorios.')
+    return
+  }
+
+  if (!categories.includes(category)) {
+    setError('Selecciona una categoría válida.')
+    return
+  }
+
+  try {
+    const url = new URL(image)
+
+    if (url.protocol !== 'https:') {
+      throw new Error('Protocolo no permitido')
+    }
+  } catch {
+    setError('Introduce una URL de imagen HTTPS válida.')
+    return
+  }
+
+  const id = editingProduct?.id ?? crypto.randomUUID()
+
+  const updatedProduct: Product = {
+    id,
+    slug: editingProduct?.slug ?? makeSlug(name, id),
+    name,
+    category,
+    description,
+    image,
+    images: [image],
+    featured: form.featured,
+    published: form.published,
+    createdAt:
+      editingProduct?.createdAt ?? new Date().toISOString(),
+  }
+
+  setSaving(true)
+
+  try {
+    await onSave(updatedProduct)
+
+    const wasEditing = Boolean(editingProduct)
+
+    setFormOpen(false)
+    setEditingProduct(null)
     setError('')
 
-    const name = form.name.trim()
-    const category = form.category.trim()
-    const description = form.description.trim()
-    const image = form.image.trim()
-
-    if (!name || !category || !description || !image) {
-      setError('Completa todos los campos obligatorios.')
-      return
-    }
-
-    try {
-      const url = new URL(image)
-
-      if (url.protocol !== 'https:') {
-        throw new Error('Protocolo no permitido')
-      }
-    } catch {
-      setError('Introduce una URL de imagen HTTPS válida.')
-      return
-    }
-
-    const id = editingProduct?.id ?? crypto.randomUUID()
-
-    const updatedProduct: Product = {
-      id,
-      slug: editingProduct?.slug ?? makeSlug(name, id),
-      name,
-      category,
-      description,
-      image,
-      images: editingProduct
-        ? [
-            image,
-            ...(editingProduct.images ?? []).filter(
-              (item) => item !== image
-            ),
-          ]
-        : [image],
-      featured: form.featured,
-      createdAt:
-        editingProduct?.createdAt ?? new Date().toISOString(),
-    }
-
-    onSave(updatedProduct)
-    closeForm()
     setMessage(
-      editingProduct
+      wasEditing
         ? 'Producto actualizado correctamente.'
         : 'Producto creado correctamente.'
     )
-  }
-
-  function handleDelete(product: Product) {
-    const confirmed = window.confirm(
-      `¿Estás seguro de que deseas eliminar "${product.name}"?`
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'No se pudo guardar el producto.'
     )
-
-    if (!confirmed) return
-
-    onDelete(product.id)
-    setMessage('Producto eliminado correctamente.')
+  } finally {
+    setSaving(false)
   }
+}
+
+
+
+async function handleDelete(product: Product) {
+  if (saving || deletingId !== null) return
+
+  const confirmed = window.confirm(
+    `¿Estás seguro de que deseas eliminar "${product.name}"?`
+  )
+
+  if (!confirmed) return
+
+  setDeletingId(product.id)
+  setError('')
+  setMessage('')
+
+  try {
+    await onDelete(product.id)
+    setMessage('Producto eliminado correctamente.')
+  } catch (err) {
+    window.alert(
+      err instanceof Error
+        ? `No se pudo eliminar: ${err.message}`
+        : 'No se pudo eliminar el producto.'
+    )
+  } finally {
+    setDeletingId(null)
+  }
+}
+
 
   return (
     <div className="space-y-6">
@@ -209,6 +266,7 @@ useEffect(() => {
 
         <button
           type="button"
+          disabled={saving || deletingId !== null}
           onClick={openCreate}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
         >
@@ -318,6 +376,7 @@ useEffect(() => {
                     onClick={() => openEdit(product)}
                     aria-label={`Editar ${product.name}`}
                     className="rounded-lg border border-zinc-200 p-2.5 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  disabled={saving || deletingId !== null}
                   >
                     <Pencil size={18} />
                   </button>
@@ -327,6 +386,7 @@ useEffect(() => {
                     onClick={() => handleDelete(product)}
                     aria-label={`Eliminar ${product.name}`}
                     className="rounded-lg border border-red-200 p-2.5 text-red-600 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
+                 disabled={saving || deletingId !== null}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -397,22 +457,25 @@ useEffect(() => {
               <label htmlFor="product-category" className="mb-2 block text-sm font-medium">
                 Categoría
               </label>
-              <input
-                id="product-category"
-                required
-                list="category-options"
-                value={form.category}
-                onChange={(e) =>
-                  setForm({ ...form, category: e.target.value })
-                }
-                placeholder="Selecciona o escribe una categoría"
-                className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-blue-500 dark:border-zinc-700"
-              />
-              <datalist id="category-options">
-                {categories.map((category) => (
-                  <option key={category} value={category} />
-                ))}
-              </datalist>
+
+            <select
+              id="product-category"
+              required
+              value={form.category}
+              onChange={(e) =>
+                setForm({ ...form, category: e.target.value })
+              }
+              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 outline-none focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-900"
+            >
+              <option value="">Selecciona una categoría</option>
+
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+
             </div>
 
             <div>
@@ -476,6 +539,27 @@ useEffect(() => {
               </span>
             </label>
 
+<label className="flex cursor-pointer items-center gap-3">
+  <input
+    type="checkbox"
+    checked={form.published}
+    onChange={(e) =>
+      setForm({ ...form, published: e.target.checked })
+    }
+    className="h-5 w-5 accent-blue-600"
+  />
+
+  <span className="text-sm font-medium">
+    Publicar producto en el catálogo
+  </span>
+</label>
+
+<p className="text-xs text-zinc-500">
+  Si desactivas esta opción, el producto quedará
+  guardado como borrador.
+</p>
+
+
             {error && (
               <p role="alert" className="text-sm font-medium text-red-600">
                 {error}
@@ -486,18 +570,22 @@ useEffect(() => {
               <button
                 type="button"
                 onClick={closeForm}
+                disabled={saving}
                 className="rounded-xl border border-zinc-200 px-5 py-3 text-sm font-semibold dark:border-zinc-700"
               >
                 Cancelar
               </button>
 
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                <Save size={18} />
-                Guardar producto
-              </button>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              <Save size={18} />
+              {saving ? 'Guardando...' : 'Guardar producto'}
+            </button>
+
             </div>
 
           </form>
@@ -507,4 +595,3 @@ useEffect(() => {
     </div>
   )
 }
-
