@@ -1,6 +1,10 @@
 
 import { useEffect, useState } from 'react'
+
 import { ArrowRight, Search, Sparkles } from 'lucide-react'
+
+import CatalogStatus from './components/CatalogStatus'
+import { getPublishedProducts } from './services/productService'
 import Navbar from './components/Navbar'
 import ProductCatalog from './components/ProductCatalog'
 import {
@@ -12,11 +16,9 @@ import {
 import ProductDetail from './pages/ProductDetail'
 import AdminLayout from './admin/AdminLayout'
 import Dashboard from './admin/Dashboard'
-import { products as initialProducts } from './data/products'
 import type { Product } from './types/product'
 import AdminLogin from './admin/AdminLogin'
 import AdminGuard from './admin/AdminGuard'
-import SupabaseConnectionTest from './components/SupabaseConnectionTest'
 import AdminProductsPage from './admin/AdminProductsPage'
 // Reinicia la galería cuando cambia el producto
 
@@ -92,35 +94,50 @@ function App() {
   
 
 
-const [products] = useState<Product[]>(() => {
 
-  try {
-    const saved = localStorage.getItem('catalog-products-v1')
+const [products, setProducts] = useState<Product[]>([])
+const [productsLoading, setProductsLoading] = useState(true)
+const [productsError, setProductsError] = useState('')
 
-    if (saved !== null) {
-      const parsed: unknown = JSON.parse(saved)
+const [reloadProducts, setReloadProducts] = useState(0)
 
-      if (Array.isArray(parsed)) {
-        return parsed as Product[]
-      }
-    }
-  } catch (error) {
-    console.error('No se pudieron cargar los productos:', error)
-  }
-
-  return initialProducts
-})
-
+// Cargar productos publicados desde Supabase
 useEffect(() => {
-  try {
-    localStorage.setItem(
-      'catalog-products-v1',
-      JSON.stringify(products)
-    )
-  } catch (error) {
-    console.error('No se pudieron guardar los productos:', error)
+  let active = true
+
+  async function fetchProducts() {
+    try {
+      const data = await getPublishedProducts()
+
+      if (!active) return
+
+      setProducts(data)
+      setProductsError('')
+      setProductsLoading(false)
+    } catch (err) {
+      if (!active) return
+
+      setProductsError(
+        err instanceof Error
+          ? err.message
+          : 'No fue posible conectar con el catálogo.'
+      )
+      setProductsLoading(false)
+    }
   }
-}, [products])
+
+  void fetchProducts()
+
+  return () => {
+    active = false
+  }
+}, [reloadProducts])
+
+function retryProducts() {
+  setProductsLoading(true)
+  setProductsError('')
+  setReloadProducts((value) => value + 1)
+}
 
 
 
@@ -179,9 +196,20 @@ useEffect(() => {
 </Route>
 
 
-      <Route
+
+<Route
   path="/productos/:slug"
-  element={<ProductDetailRoute products={products} />}
+  element={
+    productsLoading || productsError ? (
+      <CatalogStatus
+        loading={productsLoading}
+        error={productsError}
+        onRetry={retryProducts}
+      />
+    ) : (
+      <ProductDetailRoute products={products} />
+    )
+  }
 />
         <Route
           path="/"
@@ -223,9 +251,16 @@ useEffect(() => {
             </a>
           </div>
           </section>
+          {productsLoading || productsError ? (
+            <CatalogStatus
+              loading={productsLoading}
+              error={productsError}
+              onRetry={retryProducts}
+            />
+          ) : (
+            <ProductCatalog products={products} />
+          )}
 
-          <ProductCatalog products={products} />
-          <SupabaseConnectionTest />
 
           <section id="categorias" className="mx-auto max-w-7xl px-5 py-20">
           <h2 className="text-3xl font-bold">Explora por categorías</h2>
